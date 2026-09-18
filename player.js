@@ -27,9 +27,12 @@ const SNAP_TO_END_FRAME = true;
 
 const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 
+const DEFAULT_MORE_URL = 'https://www.aftonbladet.se';
+
 const stageEl = document.getElementById('stage');
 const overlayEl = document.getElementById('overlay');
 const gateEl = document.getElementById('gate');
+const barLinkEl = document.getElementById('bar-link');
 const errorEl = document.getElementById('error');
 const stingAudio = document.getElementById('sting');
 
@@ -45,11 +48,17 @@ function showError(message) {
   errorEl.textContent = message;
 }
 
+function resolveMoreUrl(raw) {
+  if (!raw) return DEFAULT_MORE_URL;
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+}
+
 function parseParams() {
   const search = new URLSearchParams(window.location.search);
   const v = search.get('v');
   const start = Number(search.get('start') ?? search.get('s'));
   const end = Number(search.get('end') ?? search.get('e'));
+  const url = resolveMoreUrl(search.get('url'));
 
   if (!v || !VIDEO_ID_RE.test(v)) {
     return { error: 'Missing or invalid "v" parameter: expected an 11-character YouTube video ID.' };
@@ -61,11 +70,16 @@ function parseParams() {
     return { error: 'Missing or invalid "end"/"e" parameter: expected a number of seconds greater than "start"/"s".' };
   }
 
-  return { videoId: v, start, end };
+  return { videoId: v, start, end, url };
 }
 
 function setReveal(fraction) {
   overlayEl.style.setProperty('--reveal', `${fraction * 100}%`);
+  // "MORE" only becomes clickable once it's fully wiped in; never reset back
+  // to non-clickable afterwards (the reveal only ever runs forward once).
+  if (fraction >= 1) {
+    overlayEl.dataset.clickable = 'true';
+  }
 }
 
 function setBlink(on) {
@@ -221,6 +235,7 @@ function init() {
     return;
   }
   params = result;
+  barLinkEl.href = params.url;
 
   gateEl.disabled = true;
   gateEl.addEventListener('click', onGateClick);
