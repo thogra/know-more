@@ -135,3 +135,188 @@ body {
 .error[hidden] {
   display: none;
 }
+
+.error-action {
+  margin-top: 0.5em;
+}
+
+.error-action a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* --- create page ---------------------------------------------------- */
+
+body.create {
+  display: block;
+  min-height: 100vh;
+  padding: 2rem 1rem 4rem;
+}
+
+.builder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  max-width: 800px;
+  margin: 0 auto;
+  color: #eee;
+  font-family: system-ui, sans-serif;
+}
+
+.builder-title {
+  margin: 0;
+}
+
+.field {
+  width: 100%;
+}
+
+.field-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.35em;
+}
+
+.field input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-error {
+  color: #f5b5b5;
+  margin: 0.5em 0 0;
+}
+
+.field-error[hidden] {
+  display: none;
+}
+
+/* Same ≥20-RGB constraint as .gate — a translucent scrim over a cross-origin
+   iframe silently fails to composite on some GPUs below that threshold. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1em;
+  background: rgba(30, 30, 34, 0.65);
+  color: #fff;
+}
+
+.scrim[hidden] {
+  display: none;
+}
+
+.clip-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.clip-controls[hidden] {
+  display: none;
+}
+
+.range {
+  position: relative;
+  height: 28px;
+  margin: 0 0.75rem;
+  --start-pct: 0%;
+  --end-pct: 0%;
+  touch-action: none;
+}
+
+.range[data-disabled] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.range-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: #333;
+}
+
+.range-connect {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  left: var(--start-pct);
+  right: calc(100% - var(--end-pct));
+  border-radius: 2px;
+  background: #e8b21e;
+}
+
+.range-thumb {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #fff;
+  cursor: grab;
+  touch-action: none;
+}
+
+.range-thumb[data-thumb="start"] {
+  left: var(--start-pct);
+}
+
+.range-thumb[data-thumb="end"] {
+  left: var(--end-pct);
+}
+
+.range[data-dragging] .range-thumb {
+  cursor: grabbing;
+}
+
+.range-thumb:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.time-fields {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.time-fields input {
+  width: 5.5em;
+}
+
+.duration-note {
+  color: #aaa;
+}
+
+.share-output input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.open-link {
+  color: inherit;
+  white-space: nowrap;
+  align-self: center;
+}
+
+#copy-button[data-copied]::after {
+  content: " ✓";
+}

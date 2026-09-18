@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create a clip — Would you like to know more?</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="create">
+
+<div class="builder">
+  <h1 class="builder-title">Create a clip</h1>
+
+  <div class="field">
+    <label for="video-input">YouTube URL or video ID</label>
+    <div class="field-row">
+      <input type="text" id="video-input" placeholder="https://www.youtube.com/watch?v=…">
+      <button type="button" id="load-button">Load</button>
+    </div>
+    <p class="field-error" id="video-error" hidden></p>
+  </div>
+
+  <div class="stage" id="stage" hidden>
+    <div class="player-wrap">
+      <div id="player"></div>
+    </div>
+
+    <div class="shield"></div>
+
+    <div class="overlay" id="overlay">
+      <div class="bar-stack">
+        <img class="bar" data-bar="blank" src="frames/bar-blank.jpg" alt="">
+        <img class="bar" data-bar="full"  src="frames/bar-full.jpg"  alt="">
+        <img class="bar" data-bar="blue"  src="frames/bar-blue.jpg"  alt="">
+        <a class="bar-link" id="bar-link" target="_blank" rel="noopener noreferrer" aria-label="Know more"></a>
+      </div>
+    </div>
+
+    <div class="scrim" id="scrim">Loading…</div>
+  </div>
+
+  <div class="clip-controls" id="clip-controls" hidden>
+    <div class="range" id="range" data-disabled="true">
+      <div class="range-track"></div>
+      <div class="range-connect"></div>
+      <div class="range-thumb" data-thumb="start" id="thumb-start" role="slider" tabindex="-1"
+           aria-label="Start time" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+      <div class="range-thumb" data-thumb="end" id="thumb-end" role="slider" tabindex="-1"
+           aria-label="End time" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+    </div>
+
+    <div class="time-fields">
+      <label>Start <input type="number" id="start-input" min="0" step="0.1" disabled></label>
+      <label>End <input type="number" id="end-input" min="0" step="0.1" disabled></label>
+      <span class="duration-note" id="duration-note"></span>
+    </div>
+
+    <div class="field">
+      <label for="more-url-input">"MORE" link URL</label>
+      <input type="text" id="more-url-input" placeholder="https://www.aftonbladet.se">
+    </div>
+
+    <button type="button" id="preview-button" disabled>Preview</button>
+
+    <div class="share-output">
+      <label for="share-link-input">Share link</label>
+      <div class="field-row">
+        <input type="text" id="share-link-input" readonly>
+        <button type="button" id="copy-button">Copy</button>
+        <a id="open-link" class="open-link" target="_blank" rel="noopener noreferrer">Open ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="sting" src="know-more.mp3" preload="auto"></audio>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script type="module" src="create.js"></script>
+</body>
+</html>
