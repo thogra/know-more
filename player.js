@@ -29,6 +29,14 @@ const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 
 const DEFAULT_MORE_URL = 'https://www.aftonbladet.se';
 
+// Real pixel dimensions of the bar image assets (frames/bar-*.jpg). Exposed
+// to CSS as custom properties so .bar-stack's aspect-ratio stays derived
+// from one source instead of a second hardcoded literal.
+const BAR_IMAGE_WIDTH_PX = 1920;
+const BAR_IMAGE_HEIGHT_PX = 171;
+document.documentElement.style.setProperty('--bar-image-width', BAR_IMAGE_WIDTH_PX);
+document.documentElement.style.setProperty('--bar-image-height', BAR_IMAGE_HEIGHT_PX);
+
 const stageEl = document.getElementById('stage');
 const overlayEl = document.getElementById('overlay');
 const gateEl = document.getElementById('gate');
