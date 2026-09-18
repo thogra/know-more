@@ -2,7 +2,7 @@
   "name": "know-more",
   "private": true,
   "scripts": {
-    "dev": "serve ."
+    "dev": "serve docs"
   },
   "devDependencies": {
     "serve": "^14.2.1"
