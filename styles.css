@@ -64,12 +64,28 @@ body {
 }
 
 .site-nav-link {
+  position: relative;
   color: #999;
   text-decoration: none;
   font-size: 1.2rem;
   font-weight: 700;
-  padding-bottom: 0.4rem;
-  border-bottom: 12px solid transparent;
+  padding-bottom: calc(0.4rem + 4px);
+}
+
+/* A plain border can't take a gradient, so the "border" is its own layer:
+   an absolutely-positioned strip under the link text. A thin dark top edge
+   plus a gold/bronze/gold gradient body — the middle bronze tone held flat
+   across the center 20% (40%-60%) rather than a single pinch-point. */
+.site-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12px;
+  border-top: 3px solid #251603;
+  background: linear-gradient(135deg, #fceabf 0%, #815b33 40%, #815b33 60%, #fceabf 100%);
+  opacity: 0;
 }
 
 .site-nav-link:hover {
@@ -78,7 +94,10 @@ body {
 
 .site-nav-link[aria-current="page"] {
   color: #fff;
-  border-bottom-color: #e8752c;
+}
+
+.site-nav-link[aria-current="page"]::after {
+  opacity: 1;
 }
 
 .page-main {
