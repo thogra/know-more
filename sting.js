@@ -222,3 +222,87 @@ export function createStingSequence({ player, overlayEl, audioEl }) {
 
   return { play, stop, reset };
 }
+
+// How long before the clip's natural end to start fading its volume down,
+// to smooth over background.mp3's abrupt cut rather than exposing it.
+export const HOVER_AUDIO_END_FADE_SECONDS = 1;
+
+// How long a quick fade-out takes when the pointer leaves early, before
+// pausing and resetting back to the start for the next hover.
+export const HOVER_AUDIO_LEAVE_FADE_MS = 250;
+
+// Plays `audioEl` from the start for as long as the pointer hovers `linkEl`,
+// fading its volume down over the last HOVER_AUDIO_END_FADE_SECONDS to
+// smooth its abrupt ending, and fading out quickly + resetting to the start
+// if the pointer leaves early. Relies on `linkEl` only dispatching pointer
+// events while it's actually interactive — the "MORE" link is
+// `pointer-events: none` until data-clickable is set — so no extra
+// state-checking is needed here.
+export function bindHoverBackgroundAudio(linkEl, audioEl, {
+  endFadeSeconds = HOVER_AUDIO_END_FADE_SECONDS,
+  leaveFadeMs = HOVER_AUDIO_LEAVE_FADE_MS,
+} = {}) {
+  let animHandle = null;
+
+  function stopAnim() {
+    if (animHandle !== null) {
+      cancelAnimationFrame(animHandle);
+      animHandle = null;
+    }
+  }
+
+  function resetAudio() {
+    stopAnim();
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    audioEl.volume = 1;
+  }
+
+  function tickEndFade() {
+    const { currentTime, duration } = audioEl;
+    if (Number.isFinite(duration) && duration > 0) {
+      const remaining = duration - currentTime;
+      const fraction = remaining <= endFadeSeconds ? remaining / endFadeSeconds : 1;
+      // volume throws (rather than clamping) outside [0, 1] — floating-point
+      // slop right at the fade boundary is enough to trip that.
+      audioEl.volume = Math.min(1, Math.max(0, fraction));
+    }
+    if (!audioEl.paused && !audioEl.ended) {
+      animHandle = requestAnimationFrame(tickEndFade);
+    }
+  }
+
+  function onEnter() {
+    stopAnim();
+    audioEl.currentTime = 0;
+    audioEl.volume = 1;
+    // Hover isn't always treated as a user gesture by autoplay policy; if
+    // playback is blocked there's nothing else to do here — no audio, but
+    // nothing else breaks either.
+    audioEl.play().catch(() => {});
+    animHandle = requestAnimationFrame(tickEndFade);
+  }
+
+  function onLeave() {
+    stopAnim();
+    const startVolume = audioEl.volume;
+    const startTime = performance.now();
+    function tickLeaveFade(now) {
+      // Clamp both ends: a rAF timestamp can (rarely) land a hair before the
+      // performance.now() sampled synchronously above, going negative —
+      // volume throws (rather than clamping) outside [0, 1], which would
+      // otherwise kill this rAF chain before it ever reaches resetAudio().
+      const progress = Math.min(1, Math.max(0, (now - startTime) / leaveFadeMs));
+      audioEl.volume = Math.min(1, Math.max(0, startVolume * (1 - progress)));
+      if (progress < 1) {
+        animHandle = requestAnimationFrame(tickLeaveFade);
+      } else {
+        resetAudio();
+      }
+    }
+    animHandle = requestAnimationFrame(tickLeaveFade);
+  }
+
+  linkEl.addEventListener('pointerenter', onEnter);
+  linkEl.addEventListener('pointerleave', onLeave);
+}

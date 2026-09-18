@@ -1,5 +1,5 @@
 import { extractVideoId, parseClipParams, buildShareUrl, resolveMoreUrl } from './clip-url.js';
-import { applyBarImageVars, stagePlayerVars, createStingSequence } from './sting.js';
+import { applyBarImageVars, stagePlayerVars, createStingSequence, bindHoverBackgroundAudio } from './sting.js';
 
 const MIN_GAP_SECONDS = 0.5;
 const STEP_SECONDS = 0.1;
@@ -17,6 +17,7 @@ const overlayEl = document.getElementById('overlay');
 const barLinkEl = document.getElementById('bar-link');
 const scrimEl = document.getElementById('scrim');
 const stingAudio = document.getElementById('sting');
+const backgroundAudio = document.getElementById('background');
 
 const clipControlsEl = document.getElementById('clip-controls');
 const rangeEl = document.getElementById('range');
@@ -39,8 +40,11 @@ let clip = { start: 0, end: 0 };
 let pendingEditParams = null;
 let pendingSeekSeconds = null;
 let seekScheduled = false;
+let onWarmupPlaying = null;
+let onWarmupCued = null;
 
 applyBarImageVars();
+bindHoverBackgroundAudio(barLinkEl, backgroundAudio);
 
 function round2(n) {
   return Math.round(n * 100) / 100;
@@ -171,31 +175,87 @@ function onDurationReady(newDuration) {
 
 function warmUpAndResolveDuration() {
   setStageState('loading');
-  // A never-started ("cued") player reports duration 0 and can jump straight
-  // into playback on the first seekTo. Nudging it into PLAYING (muted) and
-  // straight back to PAUSED is what makes duration and scrubbing reliable.
-  player.mute();
-  player.playVideo();
+
+  let settled = false;
+
+  function finish() {
+    if (settled) return;
+    const currentDuration = player.getDuration ? player.getDuration() : 0;
+    if (currentDuration <= 0) return;
+    settled = true;
+    onWarmupPlaying = null;
+    onWarmupCued = null;
+    player.pauseVideo();
+    player.unMute();
+    onDurationReady(currentDuration);
+  }
+
+  // A never-started ("cued") player reports duration 0 and shows a black
+  // frame until it has actually rendered one. getDuration() alone is not a
+  // reliable signal that a frame has painted — it can become available from
+  // metadata before anything is decoded, so pausing as soon as it's known
+  // (an earlier approach here) could pause on a still-black iframe. Instead,
+  // wait for the player to actually report PLAYING (see onPlayerStateChange)
+  // and give it a couple of frames to paint before pausing on it.
+  onWarmupPlaying = () => {
+    requestAnimationFrame(() => requestAnimationFrame(finish));
+  };
+
+  function beginPlayback() {
+    player.mute();
+    player.playVideo();
+  }
+
+  // cueVideoById() (used when swapping to a new video on an existing
+  // player) is itself asynchronous — calling playVideo() before the player
+  // has actually settled into CUED gets silently dropped, leaving it stuck
+  // in CUED forever with nothing ever rendered (observed directly: the
+  // player would sit in CUED until the poll below gave up). A freshly
+  // constructed player is already CUED by the time onReady fires, so this
+  // resolves immediately for a first load and only actually waits on swaps.
+  if (player.getPlayerState() === YT.PlayerState.CUED) {
+    beginPlayback();
+  } else {
+    onWarmupCued = beginPlayback;
+  }
 
   let attempts = 0;
   function poll() {
-    const currentDuration = player.getDuration ? player.getDuration() : 0;
-    if (currentDuration > 0) {
-      player.pauseVideo();
-      player.unMute();
-      onDurationReady(currentDuration);
-      return;
-    }
+    if (settled) return;
     attempts += 1;
     if (attempts >= DURATION_POLL_MAX_ATTEMPTS) {
-      player.pauseVideo();
-      player.unMute();
-      setStageState('error', "Couldn't read this video's length — try a different video.");
+      // PLAYING never fired (e.g. autoplay blocked in some unusual browser
+      // policy) — give up waiting for a real frame and finish with whatever
+      // duration is available, rather than leaving the UI stuck loading.
+      onWarmupPlaying = null;
+      onWarmupCued = null;
+      const currentDuration = player.getDuration ? player.getDuration() : 0;
+      if (currentDuration > 0) {
+        finish();
+      } else {
+        settled = true;
+        player.pauseVideo();
+        player.unMute();
+        setStageState('error', "Couldn't read this video's length — try a different video.");
+      }
       return;
     }
     setTimeout(poll, DURATION_POLL_INTERVAL_MS);
   }
   poll();
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.CUED && onWarmupCued) {
+    const callback = onWarmupCued;
+    onWarmupCued = null;
+    callback();
+  }
+  if (event.data === YT.PlayerState.PLAYING && onWarmupPlaying) {
+    const callback = onWarmupPlaying;
+    onWarmupPlaying = null;
+    callback();
+  }
 }
 
 function describePlayerError(code) {
@@ -230,6 +290,7 @@ function loadVideo(videoId) {
           warmUpAndResolveDuration();
         },
         onError: onPlayerError,
+        onStateChange: onPlayerStateChange,
       },
     });
     return;

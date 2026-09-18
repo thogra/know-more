@@ -1,5 +1,5 @@
 import { parseClipParams } from './clip-url.js';
-import { applyBarImageVars, stagePlayerVars, createStingSequence } from './sting.js';
+import { applyBarImageVars, stagePlayerVars, createStingSequence, bindHoverBackgroundAudio } from './sting.js';
 
 const stageEl = document.getElementById('stage');
 const overlayEl = document.getElementById('overlay');
@@ -9,6 +9,9 @@ const errorEl = document.getElementById('error');
 const errorMessageEl = document.getElementById('error-message');
 const welcomeEl = document.getElementById('welcome');
 const stingAudio = document.getElementById('sting');
+const backgroundAudio = document.getElementById('background');
+
+bindHoverBackgroundAudio(barLinkEl, backgroundAudio);
 
 let player = null;
 let sequence = null;
