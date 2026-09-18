@@ -1,0 +1,10 @@
+{
+  "name": "know-more",
+  "private": true,
+  "scripts": {
+    "dev": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

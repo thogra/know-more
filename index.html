@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Would you like to know more?</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="player-wrap">
+    <div id="player"></div>
+  </div>
+
+  <div class="shield"></div>
+
+  <div class="overlay" id="overlay" data-frame="none">
+    <img class="bar" data-bar="blank" src="frames/bar-blank.jpg" alt="">
+    <img class="bar" data-bar="full"  src="frames/bar-full.jpg"  alt="">
+    <img class="bar" data-bar="blue"  src="frames/bar-blue.jpg"  alt="">
+  </div>
+
+  <button class="gate" id="gate" type="button">▶ Play</button>
+</div>
+
+<p class="error" id="error" hidden></p>
+
+<audio id="sting" src="know-more.mp3" preload="auto"></audio>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="player.js"></script>
+</body>
+</html>
