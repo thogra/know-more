@@ -7,6 +7,7 @@ const gateEl = document.getElementById('gate');
 const barLinkEl = document.getElementById('bar-link');
 const errorEl = document.getElementById('error');
 const errorMessageEl = document.getElementById('error-message');
+const welcomeEl = document.getElementById('welcome');
 const stingAudio = document.getElementById('sting');
 
 let player = null;
@@ -18,6 +19,11 @@ function showError(message) {
   stageEl.hidden = true;
   errorEl.hidden = false;
   errorMessageEl.textContent = message;
+}
+
+function showWelcome() {
+  stageEl.hidden = true;
+  welcomeEl.hidden = false;
 }
 
 function onGateClick() {
@@ -63,6 +69,11 @@ function createPlayer() {
 }
 
 function init() {
+  if (!window.location.search) {
+    showWelcome();
+    return;
+  }
+
   const result = parseClipParams(new URLSearchParams(window.location.search));
   if (result.error) {
     showError(result.error);

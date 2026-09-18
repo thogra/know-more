@@ -8,6 +8,12 @@
 </head>
 <body>
 
+<nav class="site-nav">
+  <a class="site-nav-link" href="index.html" aria-current="page">Play</a>
+  <a class="site-nav-link" href="create.html">Create</a>
+</nav>
+
+<main class="page-main">
 <div class="stage" id="stage">
   <div class="player-wrap">
     <div id="player"></div>
@@ -31,6 +37,11 @@
   <p id="error-message"></p>
   <p class="error-action"><a href="create.html">Make your own link</a></p>
 </div>
+
+<div class="welcome" id="welcome" hidden>
+  <p class="welcome-action"><a href="create.html">Create a clip</a></p>
+</div>
+</main>
 
 <audio id="sting" src="know-more.mp3" preload="auto"></audio>
 
