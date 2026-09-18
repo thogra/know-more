@@ -1,13 +1,20 @@
-// Bar animation schedule, in seconds from the start of the sting audio.
-// Derived from the sting's actual loudness envelope (loudest block ~0.75-1.15s).
-// Tune these against the audio by ear/eye — nothing else depends on their values.
-const BAR_KEYFRAMES = [
-  { t: 0.00, frame: 'blank' },
-  { t: 0.08, frame: 'full' },
-  { t: 0.74, frame: 'blue' },
-  { t: 0.86, frame: 'full' },
-  { t: 0.96, frame: 'blue' },
-  { t: 1.06, frame: 'full' },
+// Left-to-right reveal of the "full" bar over "blank", in seconds from the
+// start of the sting audio, roughly synced to the words being spoken. Ends
+// before the blink/flicker phase below, which is a separate flash effect
+// tied to the audio's loudness peak rather than to speech.
+const BAR_WIPE_START_SECONDS = 0.00;
+const BAR_WIPE_END_SECONDS = 0.70;
+
+// Blink schedule: whether the blue flash bar is shown, once the reveal above
+// has finished. Derived from the sting's actual loudness envelope (loudest
+// block ~0.75-1.15s). Tune these against the audio by ear/eye — nothing else
+// depends on their values.
+const BLINK_KEYFRAMES = [
+  { t: 0.74, on: true },
+  { t: 0.86, on: false },
+  { t: 0.96, on: true },
+  { t: 1.06, on: false },
+  { t: 1.12, on: true },
 ];
 
 // How long before the nominal end position to trigger the freeze, to absorb
@@ -41,24 +48,28 @@ function showError(message) {
 function parseParams() {
   const search = new URLSearchParams(window.location.search);
   const v = search.get('v');
-  const start = Number(search.get('start'));
-  const end = Number(search.get('end'));
+  const start = Number(search.get('start') ?? search.get('s'));
+  const end = Number(search.get('end') ?? search.get('e'));
 
   if (!v || !VIDEO_ID_RE.test(v)) {
     return { error: 'Missing or invalid "v" parameter: expected an 11-character YouTube video ID.' };
   }
   if (!Number.isFinite(start) || start < 0) {
-    return { error: 'Missing or invalid "start" parameter: expected a number of seconds >= 0.' };
+    return { error: 'Missing or invalid "start"/"s" parameter: expected a number of seconds >= 0.' };
   }
   if (!Number.isFinite(end) || end <= start) {
-    return { error: 'Missing or invalid "end" parameter: expected a number of seconds greater than "start".' };
+    return { error: 'Missing or invalid "end"/"e" parameter: expected a number of seconds greater than "start"/"s".' };
   }
 
   return { videoId: v, start, end };
 }
 
-function setBarFrame(frame) {
-  overlayEl.dataset.frame = frame;
+function setReveal(fraction) {
+  overlayEl.style.setProperty('--reveal', `${fraction * 100}%`);
+}
+
+function setBlink(on) {
+  overlayEl.dataset.blink = on ? 'on' : 'off';
 }
 
 function primeAudioForLaterPlayback() {
@@ -112,7 +123,9 @@ function enterSting() {
     // picture/bar don't hang waiting on audio that will never fire "ended".
     enterHeld();
   });
-  setBarFrame('blank');
+  overlayEl.dataset.visible = 'true';
+  setReveal(0);
+  setBlink(false);
 
   player.pauseVideo();
   if (SNAP_TO_END_FRAME) {
@@ -121,11 +134,16 @@ function enterSting() {
 
   function tick() {
     const t = stingAudio.currentTime;
-    let frame = BAR_KEYFRAMES[0].frame;
-    for (const kf of BAR_KEYFRAMES) {
-      if (kf.t <= t) frame = kf.frame;
+
+    const wipeProgress = (t - BAR_WIPE_START_SECONDS) / (BAR_WIPE_END_SECONDS - BAR_WIPE_START_SECONDS);
+    setReveal(Math.min(1, Math.max(0, wipeProgress)));
+
+    let blinkOn = false;
+    for (const kf of BLINK_KEYFRAMES) {
+      if (kf.t <= t) blinkOn = kf.on;
     }
-    setBarFrame(frame);
+    setBlink(blinkOn);
+
     barAnimHandle = requestAnimationFrame(tick);
   }
   barAnimHandle = requestAnimationFrame(tick);
@@ -139,7 +157,8 @@ function enterHeld() {
     cancelAnimationFrame(barAnimHandle);
     barAnimHandle = null;
   }
-  setBarFrame(BAR_KEYFRAMES[BAR_KEYFRAMES.length - 1].frame);
+  setReveal(1);
+  setBlink(BLINK_KEYFRAMES[BLINK_KEYFRAMES.length - 1].on);
 }
 
 function onGateClick() {

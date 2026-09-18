@@ -49,6 +49,7 @@ body {
   inset: 0;
   z-index: 2;
   pointer-events: none;
+  --reveal: 0%;
 }
 
 .overlay .bar {
@@ -60,9 +61,19 @@ body {
   opacity: 0;
 }
 
-.overlay[data-frame="blank"] .bar[data-bar="blank"],
-.overlay[data-frame="full"]  .bar[data-bar="full"],
-.overlay[data-frame="blue"]  .bar[data-bar="blue"] {
+.overlay[data-visible] .bar[data-bar="blank"] {
+  opacity: 1;
+}
+
+/* Wiped in left-to-right by JS via --reveal, synced to the sting's speech.
+   Painted over "blank" (same stack position, later in DOM) so the unrevealed
+   portion still shows the blank bar underneath. */
+.overlay[data-visible] .bar[data-bar="full"] {
+  opacity: 1;
+  clip-path: inset(0 calc(100% - var(--reveal)) 0 0);
+}
+
+.overlay[data-visible][data-blink="on"] .bar[data-bar="blue"] {
   opacity: 1;
 }
 
